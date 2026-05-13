@@ -1,0 +1,117 @@
+# ======================
+# Python
+# ======================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+.env/
+.venv/
+
+# ======================
+# Environment Variables
+# ======================
+.env
+.env.*
+!.env.example
+
+# ======================
+# FastAPI / Uvicorn
+# ======================
+*.log
+uvicorn.log
+
+# ======================
+# Pytest
+# ======================
+.pytest_cache/
+coverage.xml
+htmlcov/
+
+# ======================
+# Mypy / Ruff / Cache
+# ======================
+.mypy_cache/
+.ruff_cache/
+.cache/
+
+# ======================
+# Alembic
+# ======================
+alembic/versions/*.pyc
+
+# ======================
+# SQLite
+# ======================
+*.sqlite3
+*.db
+
+# ======================
+# VSCode / IDE
+# ======================
+.vscode/
+.idea/
+
+# ======================
+# OS Files
+# ======================
+.DS_Store
+Thumbs.db
+
+# ======================
+# Docker
+# ======================
+docker-compose.override.yml
+
+# ======================
+# Node / Next.js
+# ======================
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# npm logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ======================
+# Build files
+# ======================
+dist/
+build/
+
+# ======================
+# Uploads / Temp
+# ======================
+uploads/
+tmp/
+temp/
+
+# ======================
+# Redis / Celery
+# ======================
+celerybeat-schedule
+*.pid
+
+# ======================
+# MinIO data
+# ======================
+minio_data/
+
+# ======================
+# PostgreSQL data
+# ======================
+postgres_data/
+
+# ======================
+# RabbitMQ data
+# ======================
+rabbitmq_data/
+
+# ======================
+# Redis data
+# ======================
+redis_data/
