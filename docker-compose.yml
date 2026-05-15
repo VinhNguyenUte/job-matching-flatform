@@ -1,73 +1,40 @@
+version: "3.9"
+
 services:
-  # ==================== DATABASE ====================
   db:
     image: pgvector/pgvector:pg16
     container_name: jobmatch-postgres
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: jobmatch
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # ==================== OBJECT STORAGE ====================
-  minio:
-    image: minio/minio
-    container_name: jobmatch-minio
+  ai-service:
+    build:
+      context: ./ai_service
+      dockerfile: Dockerfile
+    container_name: jobmatch-ai-service
     restart: unless-stopped
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin123
+    env_file:
+      - .env
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "8001:8001"
     volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - ./ai_service:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
 
-  # ==================== MESSAGE QUEUE ====================
-  rabbitmq:
-    image: rabbitmq:3.13-management
-    container_name: jobmatch-rabbitmq
-    restart: unless-stopped
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    healthcheck:
-      test: ["CMD", "rabbitmqctl", "status"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ==================== REDIS (Cache + Celery Broker) ====================
-  redis:
-    image: redis:7-alpine
-    container_name: jobmatch-redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-
-  # ==================== BACKEND (FastAPI) ====================
   backend:
     build:
       context: ./backend
@@ -85,17 +52,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      minio:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      redis:
+      ai-service:
         condition: service_started
     volumes:
       - ./backend:/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-  # ==================== FRONTEND (Next.js) ====================
   frontend:
     build:
       context: ./frontend
@@ -112,35 +74,6 @@ services:
       - ./frontend:/app
       - /app/node_modules
     command: npm run dev
-
-  # ==================== CRAWLER SERVICE====================
-  # crawler:
-  #   build:
-  #     context: ./crawler-service
-  #     dockerfile: Dockerfile
-  #   container_name: jobmatch-crawler
-  #   restart: unless-stopped
-  #   env_file:
-  #     - .env
-  #   depends_on:
-  #     - backend
-  #     - rabbitmq
-
-  celery-worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: jobmatch-celery-worker
-    restart: unless-stopped
-    env_file:
-      - .env
-    command: celery -A app.core.celery_app.celery_app worker --loglevel=info --pool=solo
-    depends_on:
-      - rabbitmq
-      - redis
-      - db
-    volumes:
-      - ./backend:/app
 
 volumes:
   postgres_data:

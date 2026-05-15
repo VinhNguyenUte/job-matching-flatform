@@ -9,16 +9,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from app.core.config import settings
 from app.core.database import Base
-from app.models.user import User
-from app.models.cv import CV
-from app.models.job import Job
-from app.models.match import Match
+import app.models
 
 # this is the Alembic Config object
 config = context.config
 
-# Ghi đè sqlalchemy.url từ .env
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+config.set_main_option("sqlalchemy.url", settings.sqlalchemy_database_url)
 
 # Setup logging
 if config.config_file_name is not None:
