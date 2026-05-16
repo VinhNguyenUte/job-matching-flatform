@@ -1,22 +1,29 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 class Settings(BaseSettings):
-    DATABASE_URL: str
+    POSTGRES_DB: str = "job_matching_db"
+    POSTGRES_USER: str = "user"
+    POSTGRES_PASSWORD: str = "password"
+    POSTGRES_HOST: str = "db"
+    POSTGRES_PORT: int = 5432
+    AI_SERVICE_URL: str = "http://ai-service:8001"
 
-    MINIO_ENDPOINT: str
-    MINIO_ROOT_USER: str
-    MINIO_ROOT_PASSWORD: str
-    MINIO_BUCKET_NAME: str = "cv-bucket"
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    SECRET_KEY: str
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
+    @property
+    def sqlalchemy_database_url(self) -> str:
+        return (
+            f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
 
-    GEMINI_API_KEY: str
+    @property
+    def asyncpg_database_url(self) -> str:
+        return (
+            f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
 
-    RABBITMQ_URL: str = "amqp://guest:guest@rabbitmq:5672/"
-
-    class Config:
-        env_file = ".env"
 
 settings = Settings()
