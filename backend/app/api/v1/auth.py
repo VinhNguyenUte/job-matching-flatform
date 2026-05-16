@@ -17,14 +17,12 @@ router = APIRouter()
 
 @router.post("/register", response_model=UserResponse, status_code=201)
 def register(user_in: UserCreate, db: Session = Depends(get_db)):
-    # Kiểm tra email tồn tại
     if db.query(User).filter(User.email == user_in.email).first():
         raise HTTPException(
             status_code=400,
             detail="Email already registered"
         )
     
-    # Tạo user
     hashed_password = get_password_hash(user_in.password)
     user = User(
         email=user_in.email,

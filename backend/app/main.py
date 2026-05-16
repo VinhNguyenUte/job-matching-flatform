@@ -19,8 +19,11 @@ app.include_router(job.ingestion_router, prefix="/jobs", tags=["jd-ingestion"])
 
 @app.get("/")
 def root():
-    return {"message": "JobMatch Backend is running"}
+    return {"message": "JobMatch AI Backend is running"}
 
+@app.on_event("startup")
+async def startup_event():
+    print("FastAPI + Celery started with RabbitMQ")
 
 @app.get("/health")
 def health():
