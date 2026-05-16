@@ -28,11 +28,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 @app.get("/")
 def root():
-    return {"message": "JobMatch AI Backend is running 🚀"}
+    return {"message": "JobMatch AI Backend is running"}
 
 @app.on_event("startup")
 async def startup_event():
-    print("🚀 FastAPI + Celery started with RabbitMQ")
+    print("FastAPI + Celery started with RabbitMQ")
 
 # Health check cho Celery
 @app.get("/health/celery")

@@ -1,23 +1,23 @@
-# ==================== FRONTEND - Next.js (Phiên bản ổn định) ====================
-
-FROM node:20-alpine
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
 
-# Cài dependencies
 RUN npm ci --frozen-lockfile
 
-# Copy toàn bộ source code
+# Sao chép toàn bộ mã nguồn của ReactJS
 COPY . .
 
-# Build Next.js
 RUN npm run build
 
-# Expose port
-EXPOSE 3000
+FROM nginx:alpine
 
-# Chạy production
-CMD ["npm", "start"]
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Nginx Production chạy bên trong Container mặc định ở cổng 80
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
