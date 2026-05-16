@@ -1,5 +1,6 @@
 from google.genai import types
 
+from app.common.config import settings
 from app.common.clients.gemini import gemini_client
 from app.common.schemas.job import JobParsedSchema
 
@@ -24,7 +25,7 @@ class JDParsingService:
         """
 
         response = gemini_client.models.generate_content(
-            model="gemini-2.5-flash",
+            model=settings.AI_GENERATION_MODEL,
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",

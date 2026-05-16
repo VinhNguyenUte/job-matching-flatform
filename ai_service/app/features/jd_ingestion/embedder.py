@@ -1,5 +1,6 @@
 from google.genai import types
 
+from app.common.config import settings
 from app.common.clients.gemini import gemini_client
 from app.common.schemas.job import JobParsedSchema
 
@@ -58,7 +59,7 @@ class JDEmbeddingService:
     @staticmethod
     async def generate_embedding(text: str) -> list[float]:
         response = gemini_client.models.embed_content(
-            model="gemini-embedding-2",
+            model=settings.embedding_model,
             contents=text,
             config=types.EmbedContentConfig(output_dimensionality=768),
         )

@@ -1,4 +1,5 @@
 from sqlalchemy import BigInteger, Column, ForeignKey, String
+from sqlalchemy.dialects.postgresql import UUID
 
 from app.core.database import Base
 from app.models.base import public_id_column
@@ -15,5 +16,5 @@ class Mindset(Base):
 class JobMindset(Base):
     __tablename__ = "job_mindsets"
 
-    job_id = Column(BigInteger, ForeignKey("jobs.id", ondelete="CASCADE"), primary_key=True)
+    job_id = Column(UUID(as_uuid=True), ForeignKey("jobs.id", ondelete="CASCADE"), primary_key=True)
     mindset_id = Column(BigInteger, ForeignKey("mindsets.id", ondelete="CASCADE"), primary_key=True)

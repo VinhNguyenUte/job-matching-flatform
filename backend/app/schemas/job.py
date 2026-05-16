@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -13,7 +14,7 @@ class JobBase(BaseModel):
 
 
 class JobResponse(JobBase):
-    id: int
+    id: UUID
     source: Optional[str] = None
     created_at: datetime
 
@@ -108,7 +109,7 @@ class JobParsedSchema(BaseModel):
 
 
 class JobCatalogItem(BaseModel):
-    id: int
+    id: UUID
     title: str
     company_name: str
     city: Optional[str] = None
@@ -125,7 +126,7 @@ class JobCatalogItem(BaseModel):
 class JobIngestItemResult(BaseModel):
     title: str
     status: str
-    job_id: Optional[int] = None
+    job_id: Optional[UUID] = None
     detail: Optional[str] = None
 
 
