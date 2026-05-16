@@ -1,18 +1,17 @@
-from sqlalchemy import BigInteger, Boolean, Column, Date, DateTime, ForeignKey, Integer, Numeric, String, Text, text
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, Numeric, String, Text, text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 from pgvector.sqlalchemy import Vector
 
 from app.core.database import Base
-from app.models.base import public_id_column
+from app.models.base import uuid_pk_column
 
 
 class Job(Base):
     __tablename__ = "jobs"
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
-    public_id = public_id_column()
-    company_id = Column(BigInteger, ForeignKey("companies.id", ondelete="SET NULL"), nullable=True)
+    id = uuid_pk_column()
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="SET NULL"), nullable=True)
     title = Column(String(255), nullable=False)
     business_unit = Column(String(100))
     department = Column(String(100))
@@ -51,3 +50,4 @@ class Job(Base):
 
     company = relationship("Company", back_populates="jobs")
     locations = relationship("JobLocation", back_populates="job", cascade="all, delete-orphan")
+    applications = relationship("Application", back_populates="job", cascade="all, delete-orphan")

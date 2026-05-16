@@ -1,16 +1,16 @@
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, String, Text, text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Text, text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
-from app.models.base import public_id_column
+from app.models.base import uuid_pk_column
 
 
 class Company(Base):
     __tablename__ = "companies"
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
-    public_id = public_id_column()
-    parent_company_id = Column(BigInteger, ForeignKey("companies.id", ondelete="SET NULL"), nullable=True)
+    id = uuid_pk_column()
+    parent_company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="SET NULL"), nullable=True)
     name = Column(String(255), nullable=False)
     website = Column(Text)
     logo_url = Column(Text)

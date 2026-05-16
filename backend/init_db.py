@@ -7,6 +7,8 @@ import asyncpg
 from app.core.config import settings
 
 RESET_SQL = """
+DROP TABLE IF EXISTS applications CASCADE;
+DROP TABLE IF EXISTS cvs CASCADE;
 DROP TABLE IF EXISTS job_raw_logs CASCADE;
 DROP TABLE IF EXISTS job_locations CASCADE;
 DROP TABLE IF EXISTS job_mindsets CASCADE;
@@ -21,6 +23,7 @@ DROP TABLE IF EXISTS job_skills CASCADE;
 DROP TABLE IF EXISTS skills CASCADE;
 DROP TABLE IF EXISTS jobs CASCADE;
 DROP TABLE IF EXISTS companies CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
 """
 
 
@@ -39,6 +42,6 @@ async def init_db(reset: bool = False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Initialize backend-owned database schema.")
-    parser.add_argument("--reset", action="store_true", help="Drop existing JD tables before creating schema.")
+    parser.add_argument("--reset", action="store_true", help="Drop existing backend-owned tables before creating schema.")
     args = parser.parse_args()
     asyncio.run(init_db(reset=args.reset))

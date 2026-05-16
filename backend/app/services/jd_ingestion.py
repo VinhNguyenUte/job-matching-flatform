@@ -2,6 +2,7 @@ import hashlib
 from datetime import datetime
 from decimal import Decimal
 from typing import Iterable
+from uuid import UUID
 
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -106,7 +107,7 @@ class JDIngestionService:
                     return {
                         "title": item.title,
                         "status": "skipped",
-                        "job_id": int(existing_job.id),
+                        "job_id": existing_job.id,
                         "detail": "Job nay da ton tai theo source_url.",
                     }
 
@@ -184,7 +185,7 @@ class JDIngestionService:
             await JDIngestionService._attach_locations(session, job.id, parsed)
 
             raw_log.processing_status = "completed"
-            return {"title": item.title, "status": "success", "job_id": int(job.id)}
+            return {"title": item.title, "status": "success", "job_id": job.id}
 
     @staticmethod
     async def _mark_failed(session: AsyncSession, item: JobIngestRequest, content_hash: str):
@@ -229,13 +230,13 @@ class JDIngestionService:
         return entity
 
     @staticmethod
-    async def _attach_skills(session: AsyncSession, job_id: int, parsed: JobParsedSchema):
+    async def _attach_skills(session: AsyncSession, job_id: UUID, parsed: JobParsedSchema):
         for skill_item in JDIngestionService._dedupe_by_name(parsed.skills):
             skill = await JDIngestionService._get_or_create_named(session, Skill, skill_item.name)
             session.add(JobSkill(job_id=job_id, skill_id=skill.id, priority_level=skill_item.priority_level))
 
     @staticmethod
-    async def _attach_tools(session: AsyncSession, job_id: int, parsed: JobParsedSchema):
+    async def _attach_tools(session: AsyncSession, job_id: UUID, parsed: JobParsedSchema):
         for tool_item in JDIngestionService._dedupe_by_name(parsed.tools):
             tool = await JDIngestionService._get_or_create_named(session, Tool, tool_item.name)
             session.add(
@@ -248,7 +249,7 @@ class JDIngestionService:
             )
 
     @staticmethod
-    async def _attach_languages(session: AsyncSession, job_id: int, parsed: JobParsedSchema):
+    async def _attach_languages(session: AsyncSession, job_id: UUID, parsed: JobParsedSchema):
         for lang_item in JDIngestionService._dedupe_by_name(parsed.languages):
             language = await JDIngestionService._get_or_create_named(session, Language, lang_item.name)
             session.add(
@@ -261,13 +262,13 @@ class JDIngestionService:
             )
 
     @staticmethod
-    async def _attach_mindsets(session: AsyncSession, job_id: int, parsed: JobParsedSchema):
+    async def _attach_mindsets(session: AsyncSession, job_id: UUID, parsed: JobParsedSchema):
         for mindset_name in JDIngestionService._dedupe_strings(parsed.mindsets):
             mindset = await JDIngestionService._get_or_create_named(session, Mindset, mindset_name)
             session.add(JobMindset(job_id=job_id, mindset_id=mindset.id))
 
     @staticmethod
-    async def _attach_benefits(session: AsyncSession, job_id: int, parsed: JobParsedSchema):
+    async def _attach_benefits(session: AsyncSession, job_id: UUID, parsed: JobParsedSchema):
         for benefit_item in JDIngestionService._dedupe_by_name(parsed.benefits):
             benefit = await JDIngestionService._get_or_create_named(
                 session,
@@ -280,7 +281,7 @@ class JDIngestionService:
             session.add(JobBenefit(job_id=job_id, benefit_id=benefit.id, note=benefit_item.note))
 
     @staticmethod
-    async def _attach_locations(session: AsyncSession, job_id: int, parsed: JobParsedSchema):
+    async def _attach_locations(session: AsyncSession, job_id: UUID, parsed: JobParsedSchema):
         seen = set()
         for location in parsed.locations:
             key = (
@@ -358,7 +359,7 @@ class JDIngestionService:
     def _map_job(job: Job):
         city = job.locations[0].city if job.locations else None
         return {
-            "id": int(job.id),
+            "id": job.id,
             "title": job.title,
             "company_name": job.company.name if job.company else "Unknown",
             "city": city,

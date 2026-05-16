@@ -15,7 +15,24 @@ POSTGRES_PASSWORD=password
 POSTGRES_HOST=db
 POSTGRES_PORT=5432
 
+AI_PROVIDER=gemini
+AI_GENERATION_MODEL=gemini-2.5-flash
 GEMINI_API_KEY=your_gemini_api_key_here
+
+# Optional model override. Leave empty to use default gemini-embedding-001.
+# AI_EMBEDDING_MODEL=gemini-embedding-001
+
+# Optional, only needed when AI_PROVIDER=vertex
+VERTEX_API_KEY=your_vertex_api_key_here
+# These aliases are also supported for local Vertex config:
+# VERTEX_GEMINI_APIKEY=your_vertex_api_key_here
+# VERTEX_PROJECT_ID=your_gcp_project_id
+# VERTEX_LOCATION=asia-southeast1
+
+# Optional Vertex ADC/service account config if you do not use VERTEX_API_KEY
+GOOGLE_CLOUD_PROJECT=your_gcp_project_id
+GOOGLE_CLOUD_LOCATION=us-central1
+GOOGLE_APPLICATION_CREDENTIALS=/app/secrets/vertex-service-account.json
 
 AI_SERVICE_URL=http://ai-service:8001
 NEXT_PUBLIC_API_URL=http://localhost:8000
@@ -26,6 +43,9 @@ Ghi chú:
 - Khi chạy bằng Docker Compose, `POSTGRES_HOST=db` là đúng.
 - Khi chạy backend ngoài Docker và DB trong Docker, dùng `POSTGRES_HOST=localhost`, `POSTGRES_PORT=5433`.
 - `AI_SERVICE_URL=http://ai-service:8001` dùng cho backend gọi AI service trong Docker network.
+- `AI_PROVIDER=gemini` là mặc định cho cả nhóm và dùng `GEMINI_API_KEY`.
+- `AI_PROVIDER=vertex` chỉ dùng khi bạn có `VERTEX_API_KEY` riêng hoặc Google Cloud project + credential Vertex riêng.
+- Nếu dùng Vertex mà gặp lỗi embedding model, để trống `AI_EMBEDDING_MODEL` để hệ thống dùng default `gemini-embedding-001`.
 
 ## 2. Build Và Chạy Container
 
@@ -315,7 +335,9 @@ Kiểm tra dữ liệu jobs sau khi insert: `SELECT * FROM public.jobs ORDER BY 
 
 Reset backend khi sửa code backend: `docker compose restart backend`
 
-Reset AI service khi đổi `GEMINI_API_KEY`: `docker compose restart ai-service`
+Recreate AI service khi đổi `GEMINI_API_KEY`: `docker compose up -d --force-recreate ai-service`
+
+Recreate AI service khi đổi `AI_PROVIDER`/Vertex config: `docker compose up -d --force-recreate ai-service`
 
 Reset schema JD về trạng thái init và xóa dữ liệu cũ: `docker compose exec backend python init_db.py --reset`
 

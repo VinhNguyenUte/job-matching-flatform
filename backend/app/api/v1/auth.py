@@ -1,4 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+<<<<<<< HEAD
+=======
+from fastapi.security import OAuth2PasswordRequestForm
+>>>>>>> 94954e2 (feat: create users table, add vertex connect method)
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
