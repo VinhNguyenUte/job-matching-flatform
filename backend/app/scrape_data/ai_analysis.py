@@ -240,7 +240,7 @@ def merge_ai_and_fallbacks(record: dict, text: str, ai_data: dict) -> dict:
         "title": normalize_field(ai_data.get("title")) or guess_title(text),
         "company": normalize_field(ai_data.get("company")) or guess_company(record, text),
         "location": normalize_field(ai_data.get("location")) or guess_location(text),
-        "link": normalize_field(ai_data.get("link"), "") or normalize_field(record.get("url"), "N/A"),
+        "link": normalize_field(record.get("url")) or normalize_field(ai_data.get("link"), "N/A"),
         "seniority_level": normalize_field(ai_data.get("seniority_level")) or guess_seniority_level(text),
         "employment_type": normalize_field(ai_data.get("employment_type")) or guess_employment_type(text),
         "job_function": normalize_field(ai_data.get("job_function")) or guess_job_function(text),
@@ -289,7 +289,7 @@ Phân tích bài đăng Facebook sau và trích xuất dữ liệu thành JSON t
 5. employment_type: Loại hình ("Internship", "Full-time", "Part-time", "Contract", etc).
 6. job_function: Lĩnh vực ("Information Technology", "Sales", "Marketing", etc).
 7. industries: Ngành ("Software Development", "IT Services", etc).
-8. link: Link bài đăng (hoặc "N/A" nếu không có).
+8. link: Link bài đăng (hoặc "N/A" if không có).
 
 Chỉ trả về đúng 1 object JSON với đủ các khóa: title, company, location, seniority_level, employment_type, job_function, industries, link.
 Nếu không chắc chắn, hãy để giá trị rỗng cho từng khóa nhưng vẫn phải giữ đúng cấu trúc object.
@@ -311,7 +311,70 @@ Trả về duy nhất JSON thuần túy, không markdown, không giải thích t
         return None
 
 
-def format_to_jobs_json(record: dict, text: str, ai_data: dict) -> dict:
+def is_meaningful(text: str) -> bool:
+    if not text or len(text.strip()) < 25:
+        return False
+
+    text_lower = text.lower()
+    words = re.findall(r'\b\w+\b', text_lower)
+    if not words:
+        return False
+
+    # 1. Tỷ lệ nguyên âm
+    vowels = "aeiouyàáãạảăằắẵặẳâầấẫậẩèéẽẹẻêềếễệểìíĩịỉòóõọỏôồốỗộổơờớỡợởùúũụủưừứữựử"
+    num_vowels = sum(1 for char in text_lower if char in vowels)
+    vowel_ratio = num_vowels / len(text_lower.replace(" ", "")) if len(text_lower.replace(" ", "")) > 0 else 0
+    if not (0.2 < vowel_ratio < 0.7):
+        return False
+
+    # 2. Kiểm tra các từ phổ biến
+    common_words = ["tuyển", "dụng", "cần", "vị trí", "lương", "công ty", "yêu cầu", "kinh nghiệm", "làm việc", "hcm", "hà nội", "đà nẵng", "developer", "engineer", "intern", "junior", "senior", "apply", "cv", "email"]
+    if not any(word in text_lower for word in common_words):
+        # Nếu không có từ phổ biến nào, kiểm tra kỹ hơn
+        if len(words) < 5:
+            return False
+        avg_word_len = sum(len(w) for w in words) / len(words)
+        if avg_word_len > 10 or avg_word_len < 2.5:
+            return False
+
+    # 3. Kiểm tra ký tự không phải chữ và số
+    alnum_count = sum(1 for char in text if char.isalnum())
+    alnum_ratio = alnum_count / len(text) if len(text) > 0 else 0
+    if alnum_ratio < 0.6:
+        return False
+        
+    return True
+
+
+async def analyze_records(records, model, limit: Optional[int] = None):
+    results = []
+    usable_records = records[:limit] if limit and limit > 0 else records
+
+    for idx, record in enumerate(usable_records, 1):
+        text = (
+            record.get("text")
+            or record.get("raw_text")
+            or record.get("content")
+            or ""
+        ).strip()
+        if not text or not is_meaningful(text):
+            print(f"✗ Bỏ qua bài {idx}/{len(usable_records)} (nội dung không hợp lệ)")
+            continue
+
+        ai_data = await analyze_post_ai(text, model)
+        record["raw_text"] = text
+        record["scraped_at"] = record.get("scraped_at") or datetime.now().isoformat()
+        
+        # Format output as jobs.json structure
+        job_entry = await format_to_jobs_json(record, text, ai_data)
+        results.append(job_entry)
+        print(f"✓ Đã phân tích bài {idx}/{len(usable_records)}")
+        await asyncio.sleep(0.25)
+
+    return results
+
+
+async def format_to_jobs_json(record: dict, text: str, ai_data: dict) -> dict:
     """Transform analyzed data to jobs.json format"""
     merged = merge_ai_and_fallbacks(record, text, ai_data)
     job_entry = {
@@ -329,39 +392,27 @@ def format_to_jobs_json(record: dict, text: str, ai_data: dict) -> dict:
     return job_entry
 
 
-async def analyze_records(records, model, limit: Optional[int] = None):
-    results = []
-    usable_records = records[:limit] if limit and limit > 0 else records
-
-    for idx, record in enumerate(usable_records, 1):
-        text = (
-            record.get("text")
-            or record.get("raw_text")
-            or record.get("content")
-            or ""
-        ).strip()
-        if not text:
-            continue
-
-        ai_data = await analyze_post_ai(text, model)
-        record["raw_text"] = text
-        record["scraped_at"] = record.get("scraped_at") or datetime.now().isoformat()
-        
-        # Format output as jobs.json structure
-        job_entry = format_to_jobs_json(record, text, ai_data)
-        results.append(job_entry)
-        print(f"✓ Đã phân tích bài {idx}/{len(usable_records)}")
-        await asyncio.sleep(0.25)
-
-    return results
-
-
 async def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     if hasattr(sys.stderr, "reconfigure"):
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-    load_dotenv()
+
+    # Tự động quét ngược lên các thư mục cha để tìm file .env từ vị trí script hiện tại
+    current_dir = Path(__file__).resolve().parent
+    project_root_env = None
+    
+    for parent in [current_dir] + list(current_dir.parents):
+        if (parent / '.env').exists():
+            project_root_env = parent / '.env'
+            break
+
+    if project_root_env:
+        load_dotenv(dotenv_path=project_root_env)
+    else:
+        # Phương án dự phòng cuối cùng nếu không tìm thấy cấu trúc thư mục
+        load_dotenv()
+
     parser = argparse.ArgumentParser(description="Phân tích JSON bài đăng Facebook bằng Gemini")
     parser.add_argument("--input", help="File JSON đầu vào từ fb_scraper.py")
     parser.add_argument("--output", help="File JSON đầu ra")
