@@ -99,6 +99,12 @@ celerybeat-schedule
 *.pid
 
 # ======================
+# Sensitive Files
+# ======================
+backend/app/scrape_data/cookies.json
+
+
+# ======================
 # MinIO data
 # ======================
 minio_data/
