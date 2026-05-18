@@ -1,4 +1,4 @@
-from datetime import timedelta
+﻿from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
@@ -14,25 +14,25 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
-# Cấu hình đường dẫn lấy Token để tích hợp trực tiếp vào giao diện Swagger UI (/docs)
+# Cáº¥u hÃ¬nh Ä‘Æ°á»ng dáº«n láº¥y Token Ä‘á»ƒ tÃ­ch há»£p trá»±c tiáº¿p vÃ o giao diá»‡n Swagger UI (/docs)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
 
-# --- API ĐĂNG KÝ (REGISTER) ---
+# --- API ÄÄ‚NG KÃ (REGISTER) ---
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
-    # 1. Kiểm tra Email đã tồn tại hay chưa
+    # 1. Kiá»ƒm tra Email Ä‘Ã£ tá»“n táº¡i hay chÆ°a
     user_exists = db.query(User).filter(User.email == user_in.email).first()
     if user_exists:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email này đã được đăng ký trên hệ thống."
+            detail="Email nÃ y Ä‘Ã£ Ä‘Æ°á»£c Ä‘Äƒng kÃ½ trÃªn há»‡ thá»‘ng."
         )
     
-    # 2. Tiến hành mã hóa mật khẩu và lưu database
+    # 2. Tiáº¿n hÃ nh mÃ£ hÃ³a máº­t kháº©u vÃ  lÆ°u database
     new_user = User(
         email=user_in.email,
         hashed_password=get_password_hash(user_in.password),
@@ -45,23 +45,23 @@ def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
-# --- API ĐĂNG NHẬP (LOGIN) ---
-# Sử dụng OAuth2PasswordRequestForm để lấy username (chính là email) và password dạng Form-data
+# --- API ÄÄ‚NG NHáº¬P (LOGIN) ---
+# Sá»­ dá»¥ng OAuth2PasswordRequestForm Ä‘á»ƒ láº¥y username (chÃ­nh lÃ  email) vÃ  password dáº¡ng Form-data
 @router.post("/login", response_model=TokenResponse)
 def login_user(
     form_data: OAuth2PasswordRequestForm = Depends(), 
     db: Session = Depends(get_db)
 ):
-    # 1. Kiểm tra tài khoản bằng Email
+    # 1. Kiá»ƒm tra tÃ i khoáº£n báº±ng Email
     user = db.query(User).filter(User.email == form_data.username).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Tài khoản hoặc mật khẩu không chính xác.",
+            detail="TÃ i khoáº£n hoáº·c máº­t kháº©u khÃ´ng chÃ­nh xÃ¡c.",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # 2. Tạo JWT Token chứa thông tin User ID (UUID)
+    # 2. Táº¡o JWT Token chá»©a thÃ´ng tin User ID (UUID)
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         subject=user.id, expires_delta=access_token_expires
@@ -70,16 +70,16 @@ def login_user(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-# --- DEPENDENCY: LẤY THÔNG TIN USER HIỆN TẠI (GET CURRENT USER) ---
-# Hàm này dùng để inject vào các API cần bảo mật như /cv/upload hay /applications
+# --- DEPENDENCY: Láº¤Y THÃ”NG TIN USER HIá»†N Táº I (GET CURRENT USER) ---
+# HÃ m nÃ y dÃ¹ng Ä‘á»ƒ inject vÃ o cÃ¡c API cáº§n báº£o máº­t nhÆ° /cv/upload hay /applications
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Phiên đăng nhập không hợp lệ hoặc đã hết hạn.",
+        detail="PhiÃªn Ä‘Äƒng nháº­p khÃ´ng há»£p lá»‡ hoáº·c Ä‘Ã£ háº¿t háº¡n.",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        # Giải mã mã token JWT
+        # Giáº£i mÃ£ mÃ£ token JWT
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id: str = payload.get("sub")
         if user_id is None:
@@ -87,14 +87,14 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     except JWTError:
         raise credentials_exception
     
-    # Truy vấn thông tin User từ Database thông qua UUID bóc tách được từ Token
+    # Truy váº¥n thÃ´ng tin User tá»« Database thÃ´ng qua UUID bÃ³c tÃ¡ch Ä‘Æ°á»£c tá»« Token
     user = db.query(User).filter(User.id == UUID(user_id)).first()
     if user is None:
         raise credentials_exception
     return user
 
 
-# --- API THỬ NGHIỆM THÔNG TIN CÁ NHÂN (PROFILE ME) ---
+# --- API THá»¬ NGHIá»†M THÃ”NG TIN CÃ NHÃ‚N (PROFILE ME) ---
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user

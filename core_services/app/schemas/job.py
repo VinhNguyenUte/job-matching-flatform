@@ -65,3 +65,40 @@ class JobDetailResponse(JobResponse):
     benefits: List[JobBenefitResponse] = []
     languages: List[JobLanguageResponse] = []
     mindsets: List[MindsetSchema] = []
+class JobIngestRequest(BaseSchema):
+    title: Optional[str] = None
+    company: Optional[str] = None
+    location: Optional[str] = ""
+    post_time: Optional[str] = ""
+    link: Optional[str] = ""
+    description: Optional[str] = None
+    post_id: Optional[str] = None
+    author: Optional[str] = None
+    text: Optional[str] = None
+    timestamp: Optional[str] = ""
+    url: Optional[str] = ""
+    scraped_at: Optional[str] = ""
+    likes: Optional[int] = None
+    comments_count: Optional[int] = None
+    shares: Optional[int] = None
+    comments: List[Any] = []
+
+
+class JobIngestItemResult(BaseSchema):
+    title: str
+    status: str
+    job_id: Optional[UUID] = None
+    detail: Optional[str] = None
+
+
+class JobIngestSummary(BaseSchema):
+    total: int
+    success: int
+    skipped: int
+    errors: int
+
+
+class JobIngestResponse(BaseSchema):
+    success: bool
+    summary: JobIngestSummary
+    results: List[JobIngestItemResult]

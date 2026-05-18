@@ -1,14 +1,12 @@
-version: "3.9"
-
-services:
+﻿services:
   postgres:
-    image: postgres:15
+    image: pgvector/pgvector:pg15
     environment:
       POSTGRES_DB: job_matching_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: YourSecurePassword123!
+      POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -32,6 +30,23 @@ services:
     volumes:
       - minio_data:/data
 
+  ai_processing:
+    build:
+      context: ./ai_processing
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: job_matching_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+    ports:
+      - "8001:8001"
+    depends_on:
+      - postgres
+
   core_services:
     build:
       context: ./core_services
@@ -39,7 +54,8 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://postgres:YourSecurePassword123!@postgres:5432/job_matching_db
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-job_matching_db}
+      AI_PROCESSING_URL: http://ai_processing:8001
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
       MINIO_ENDPOINT: minio:9000
       POSTGRES_HOST: postgres
@@ -52,7 +68,9 @@ services:
       - postgres
       - rabbitmq
       - minio
+      - ai_processing
 
 volumes:
   postgres_data:
   minio_data:
+
