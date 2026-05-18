@@ -14,6 +14,9 @@ class AIProcessingClient:
     async def ingest_jobs(self, payload):
         return await self._request("POST", "/api/jobs/ingest", json=payload)
 
+    async def extract_cv(self, payload):
+        return await self._request("POST", "/api/cvs/extract", json=payload)
+
     async def _request(self, method: str, path: str, **kwargs):
         try:
             async with httpx.AsyncClient(base_url=self.base_url, timeout=180.0) as client:

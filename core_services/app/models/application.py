@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String, UniqueConstraint, text
+﻿from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -11,7 +11,7 @@ class Application(Base):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    cv_id = Column(BigInteger, ForeignKey("cvs.id", ondelete="RESTRICT"), nullable=False)
+    cv_id = Column(UUID(as_uuid=True), ForeignKey("cvs.id", ondelete="RESTRICT"), nullable=False)
     job_id = Column(UUID(as_uuid=True), ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False)
     status = Column(String(30), default="applied")
     applied_at = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))

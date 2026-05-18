@@ -1,15 +1,16 @@
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, String, Text, text
+﻿from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Text, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 from pgvector.sqlalchemy import Vector
 
 from app.core.database import Base
+from app.models.base import uuid_pk_column
 
 
 class CV(Base):
     __tablename__ = "cvs"
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = uuid_pk_column()
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     title = Column(String(150))
     raw_text = Column(Text)

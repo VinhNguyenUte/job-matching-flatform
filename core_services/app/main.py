@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.v1 import cv, job, recommend
+from app.api.v1 import cv, job, recommend, auth
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -19,6 +19,7 @@ app.add_middleware(
 )
 
 # Đăng ký danh sách các Phân hệ định tuyến Routing
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(cv.router, prefix="/api/v1/cv", tags=["CV Management"])
 app.include_router(job.router, prefix="/api/v1/jobs", tags=["Job Engine"])
 app.include_router(recommend.router, prefix="/api/v1/recommend", tags=["AI Recommendation Engine"])
