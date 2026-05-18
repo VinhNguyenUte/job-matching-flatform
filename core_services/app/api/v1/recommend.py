@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List
 from app.core.database import get_db
-from app.models.domain import CV, Job
+from app.models import CV, Job
 from app.schemas.job import JobResponse
 
 router = APIRouter()

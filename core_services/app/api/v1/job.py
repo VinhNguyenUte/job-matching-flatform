@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
-from app.models.domain import Job
+from app.models import Job
 from app.schemas.job import JobResponse
 
 router = APIRouter()

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 import uuid
 
 from app.core.database import get_db
-from app.models.domain import CV, User
+from app.models import CV, User
 from app.schemas.cv import CVResponse, CVCreate
 from app.services.minio_service import minio_service
 from app.services.rabbitmq_service import rabbitmq_service
