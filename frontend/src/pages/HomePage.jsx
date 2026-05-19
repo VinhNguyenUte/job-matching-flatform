@@ -2,7 +2,10 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useJobStore } from '../lib/store'
 import apiClient from '../lib/api'
-import { Briefcase, MapPin, DollarSign } from 'lucide-react'
+import { Briefcase, MapPin, DollarSign, Sparkles } from 'lucide-react'
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faRobot, faBolt, faBullseye } from '@fortawesome/free-solid-svg-icons'
 
 export default function HomePage() {
   const { jobs, setJobs, isLoading, setLoading } = useJobStore()
@@ -12,10 +15,10 @@ export default function HomePage() {
   }, [])
 
   const fetchFeaturedJobs = async () => {
+    setJobs(response.data)
     setLoading(true)
     try {
       const response = await apiClient.get('/jobs/search?limit=6')
-      setJobs(response.data)
     } catch (err) {
       console.error('Failed to fetch jobs:', err)
     } finally {
@@ -32,12 +35,20 @@ export default function HomePage() {
           <p className="text-xl mb-8">
             AI-powered job matching that understands your skills and aspirations
           </p>
-          <div className="flex gap-4 justify-center">
+          <div className="flex flex-wrap gap-4 justify-center">
             <Link
               to="/jobs"
-              className="px-8 py-3 bg-white text-blue-600 font-bold rounded-lg hover:bg-gray-100"
+              className="px-8 py-3 bg-white text-blue-600 font-bold rounded-lg hover:bg-gray-100 transition"
             >
               Explore Jobs
+            </Link>
+            
+            <Link
+              to="/dashboard"
+              className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-lg border border-indigo-500 hover:bg-indigo-700 flex items-center gap-2 transition"
+            >
+              <Sparkles size={18} className="animate-pulse" />
+              AI Job Recommendation
             </Link>
           </div>
         </div>
@@ -54,26 +65,28 @@ export default function HomePage() {
               <Link
                 key={job.id}
                 to={`/jobs/${job.id}`}
-                className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition"
+                className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition flex flex-col justify-between"
               >
-                <h3 className="text-xl font-bold mb-2">{job.title}</h3>
-                <p className="text-gray-600 mb-4">{job.company}</p>
+                <div>
+                  <h3 className="text-xl font-bold mb-2 line-clamp-1">{job.title}</h3>
+                  <p className="text-gray-600 mb-4">{job.company}</p>
 
-                <div className="space-y-2 text-sm text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <MapPin size={16} />
-                    {job.location}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Briefcase size={16} />
-                    {job.job_type || 'Full-time'}
-                  </div>
-                  {job.salary_min && (
+                  <div className="space-y-2 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
-                      <DollarSign size={16} />
-                      {job.salary_min} - {job.salary_max} {job.currency}
+                      <MapPin size={16} />
+                      {job.location}
                     </div>
-                  )}
+                    <div className="flex items-center gap-2">
+                      <Briefcase size={16} />
+                      {job.job_type || 'Full-time'}
+                    </div>
+                    {job.salary_min && (
+                      <div className="flex items-center gap-2">
+                        <DollarSign size={16} />
+                        {job.salary_min} - {job.salary_max} {job.currency}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </Link>
             ))}
@@ -81,24 +94,32 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* Features */}
+      {/* Features - Đã cập nhật sang FontAwesomeIcon */}
       <section className="bg-gray-50 py-12 px-4 rounded-lg">
         <h2 className="text-3xl font-bold mb-8 text-center">Why JobMatch?</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="text-center">
-            <div className="text-4xl mb-4">🤖</div>
+            <div className="text-4xl mb-4 text-blue-600">
+              <FontAwesomeIcon icon={faRobot} />
+            </div>
             <h3 className="font-bold mb-2">AI-Powered</h3>
-            <p>Smart matching based on your skills and experience</p>
+            <p className="text-gray-600 text-sm">Smart matching based on your skills and experience</p>
           </div>
+          
           <div className="text-center">
-            <div className="text-4xl mb-4">⚡</div>
+            <div className="text-4xl mb-4 text-yellow-500">
+              <FontAwesomeIcon icon={faBolt} />
+            </div>
             <h3 className="font-bold mb-2">Fast & Easy</h3>
-            <p>Find relevant opportunities in seconds</p>
+            <p className="text-gray-600 text-sm">Find relevant opportunities in seconds</p>
           </div>
+          
           <div className="text-center">
-            <div className="text-4xl mb-4">🎯</div>
+            <div className="text-4xl mb-4 text-red-500">
+              <FontAwesomeIcon icon={faBullseye} />
+            </div>
             <h3 className="font-bold mb-2">Accurate</h3>
-            <p>Precise matching for better opportunities</p>
+            <p className="text-gray-600 text-sm">Precise matching for better opportunities</p>
           </div>
         </div>
       </section>

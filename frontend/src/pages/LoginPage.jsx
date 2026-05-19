@@ -17,12 +17,10 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      // 1. Dùng URLSearchParams chuẩn cho FastAPI
       const payload = new URLSearchParams()
       payload.append('username', email)
       payload.append('password', password)
 
-      // 2. Dùng CHÍNH XÁC apiClient (không dùng axios trần)
       const response = await apiClient.post('/auth/login', payload, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
@@ -43,10 +41,8 @@ export default function LoginPage() {
 
       navigate('/dashboard')
     } catch (err) {
-      // IN LỖI RA CONSOLE ĐỂ BẠN NHÌN THẤY
       console.error('LỖI ĐÂY NÈ:', err)
 
-      // THAY ĐỔI QUAN TRỌNG: Nếu lỗi do JavaScript crash, hiển thị err.message luôn
       if (err.response?.data?.detail) {
         const detail = err.response.data.detail
         const errorMessage = Array.isArray(detail)
