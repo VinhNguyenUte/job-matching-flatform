@@ -3,6 +3,7 @@
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Enterprise Job Matching Core API"
+    ENVIRONMENT: str = "development"  # development, staging, production
     DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5433/job_matching_db"
     AI_PROCESSING_URL: str = "http://localhost:8001"
 

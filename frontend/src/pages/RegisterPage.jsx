@@ -27,7 +27,15 @@ export default function RegisterPage() {
       await apiClient.post('/auth/register', formData)
       navigate('/login')
     } catch (err) {
-      setError(err.response?.data?.detail || 'Registration failed. Please try again.')
+      const detail = err.response?.data?.detail
+      const errorMessage = Array.isArray(detail)
+        ? detail.map((item) => item.msg || JSON.stringify(item)).join(', ')
+        : typeof detail === 'string'
+        ? detail
+        : detail
+        ? JSON.stringify(detail)
+        : 'Registration failed. Please try again.'
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }

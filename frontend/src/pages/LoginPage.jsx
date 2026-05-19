@@ -17,10 +17,11 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const response = await apiClient.post('/auth/login', {
-        username: email,
-        password: password,
-      })
+      const payload = new FormData()
+      payload.append('username', email)
+      payload.append('password', password)
+
+      const response = await apiClient.post('/auth/login', payload)
 
       const { access_token } = response.data
       setToken(access_token)
@@ -31,7 +32,15 @@ export default function LoginPage() {
 
       navigate('/dashboard')
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed. Please try again.')
+      const detail = err.response?.data?.detail
+      const errorMessage = Array.isArray(detail)
+        ? detail.map((item) => item.msg || JSON.stringify(item)).join(', ')
+        : typeof detail === 'string'
+        ? detail
+        : detail
+        ? JSON.stringify(detail)
+        : 'Login failed. Please try again.'
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
