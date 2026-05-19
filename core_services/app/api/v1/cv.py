@@ -152,7 +152,7 @@ async def upload_cv_images(
         raise HTTPException(status_code=500, detail=f"CV upload failed: {exc}") from exc
 
 
-@router.post("/upload", response_model=CVResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/upload", response_model=CVUploadQueuedResponse, status_code=status.HTTP_202_ACCEPTED)
 async def upload_user_cv(
     title: str = Form("My Resume"),
     file: UploadFile = File(...),
@@ -165,13 +165,19 @@ async def upload_user_cv(
     try:
         file_bytes = await file.read()
         unique_filename = f"cvs/{current_user.id}/{uuid.uuid4()}_{file.filename}"
-        storage_path = await cloudinary_service.upload_cv(file_bytes, unique_filename, file.content_type or "application/octet-stream")
+        content_type = file.content_type or "application/octet-stream"
+        storage_path = await cloudinary_service.upload_cv(file_bytes, unique_filename, content_type)
 
         new_cv = CV(
             user_id=current_user.id,
             title=title,
             raw_text=None,
-            parsed_data={"status": "uploaded", "source": "document_upload", "cv_urls": [storage_path]},
+            parsed_data={
+                "status": "queued",
+                "source": "document_upload",
+                "cv_urls": [storage_path],
+                "mime_types": [content_type],
+            },
             embedding=None,
             is_primary=False,
         )
@@ -179,7 +185,36 @@ async def upload_user_cv(
         db.commit()
         db.refresh(new_cv)
 
-        return new_cv
+        published = rabbitmq_service.publish_task(
+            {
+                "type": "cv_document_uploaded",
+                "cv_id": new_cv.id,
+                "user_id": str(current_user.id),
+                "cv_urls": [storage_path],
+                "cv_files": [
+                    {
+                        "url": storage_path,
+                        "mime_type": content_type,
+                    }
+                ],
+            }
+        )
+        if not published:
+            new_cv.parsed_data = {
+                **(new_cv.parsed_data or {}),
+                "status": "queue_failed",
+            }
+            db.commit()
+            raise HTTPException(status_code=503, detail="Could not enqueue CV processing task.")
+
+        return CVUploadQueuedResponse(
+            message="CV document was uploaded and queued for AI processing.",
+            cv_id=new_cv.id,
+            user_id=current_user.id,
+            cv_urls=[storage_path],
+        )
+    except HTTPException:
+        raise
     except Exception as exc:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"CV upload failed: {exc}") from exc

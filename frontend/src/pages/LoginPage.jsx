@@ -2,7 +2,7 @@ import { useState } from 'react'
 import apiClient from '../lib/api'
 import { useAuthStore } from '../lib/store'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -12,7 +12,11 @@ export default function LoginPage() {
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation() 
+    }
+
     setError('')
     setIsLoading(true)
 
@@ -31,17 +35,17 @@ export default function LoginPage() {
       console.log('Received access token:', access_token)
       setToken(access_token)
 
-      // 3. Lấy profile và truyền thẳng token (đề phòng store chưa cập nhật kịp)
       const userResponse = await apiClient.get('/auth/me', {
         headers: {
           Authorization: `Bearer ${access_token}`
         }
       })
+      localStorage.setItem('user', JSON.stringify(userResponse.data))
       setUser(userResponse.data)
 
       navigate('/dashboard')
     } catch (err) {
-      console.error('LỖI ĐÂY NÈ:', err)
+      console.error('Error:', err)
 
       if (err.response?.data?.detail) {
         const detail = err.response.data.detail
@@ -52,9 +56,9 @@ export default function LoginPage() {
           : JSON.stringify(detail)
         setError(errorMessage)
       } else {
-        // Hiện lỗi JavaScript thực tế (Ví dụ: "apiClient is not defined", "navigate is not found"...)
         setError(err.message || 'Login failed. Please try again.')
       }
+      
     } finally {
       setIsLoading(false)
     }
@@ -71,13 +75,14 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Email
             </label>
             <input
               type="email"
+              name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -91,6 +96,7 @@ export default function LoginPage() {
             </label>
             <input
               type="password"
+              name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -100,10 +106,6 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            onClick={(e) => {
-              e.preventDefault();
-              handleSubmit(e);
-            }}
             disabled={isLoading}
             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
           >

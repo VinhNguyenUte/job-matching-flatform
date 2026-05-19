@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.models import Application, CV, Job, User
 from app.schemas.job import JobIngestRequest, JobIngestResponse, JobResponse
 from app.api.v1.auth import get_current_user
+from sqlalchemy.orm import joinedload
 
 router = APIRouter()
 
@@ -19,7 +20,11 @@ def search_jobs(
     limit: int = Query(20, ge=1, le=100, description="Maximum number of jobs to return"),
     db: Session = Depends(get_db),
 ):
-    query = db.query(Job)
+    # Sử dụng options(joinedload(...)) để gom toàn bộ dữ liệu Company và Locations vào 1 câu lệnh SQL duy nhất
+    query = db.query(Job).options(
+        joinedload(Job.company),
+        joinedload(Job.locations)
+    )
 
     if q:
         query = query.filter(Job.title.ilike(f"%{q}%"))

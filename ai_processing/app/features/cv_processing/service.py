@@ -15,6 +15,11 @@ class CVProcessingService:
         return await CVParserService.parse_images(images)
 
     @staticmethod
+    async def parse_cv_files(cv_files: list[dict]) -> CVParsedData:
+        files = [CVImagePayload.model_validate(file) for file in cv_files]
+        return await CVParserService.parse_images(files)
+
+    @staticmethod
     async def generate_embedding(parsed: CVParsedData) -> list[float] | None:
         embedding_text = CVEmbeddingPipeline.build_embedding_text(parsed)
         return await CVEmbeddingPipeline.generate_embedding(embedding_text)

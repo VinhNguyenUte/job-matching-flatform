@@ -78,17 +78,19 @@ async def process_cv_message(payload: dict[str, Any]):
     cv_urls = payload.get("cv_urls") or []
     if not cv_urls and payload.get("image_url"):
         cv_urls = [payload["image_url"]]
+    cv_files = payload.get("cv_files") or [{"url": url, "mime_type": "image/jpeg"} for url in cv_urls]
 
     conn = await connect_sql_db()
     try:
         await CVRepository.mark_processing(conn, cv_id=cv_id, cv_urls=cv_urls)
-        parsed = await CVProcessingService.parse_cv_images(cv_urls)
+        parsed = await CVProcessingService.parse_cv_files(cv_files)
         embedding = await CVProcessingService.generate_embedding(parsed)
         recommended_jobs = await CVRepository.find_matching_jobs(conn, embedding)
         parsed_data = {
             **parsed.model_dump(),
             "status": "completed",
             "cv_urls": cv_urls,
+            "mime_types": [file.get("mime_type") for file in cv_files],
             "recommended_jobs": recommended_jobs,
         }
         raw_text = json.dumps(parsed.model_dump(), ensure_ascii=False)

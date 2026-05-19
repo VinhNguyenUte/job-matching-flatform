@@ -16,7 +16,7 @@ class Job(Base):
     business_unit = Column(String(100))
     department = Column(String(100))
     job_level = Column(String(50))
-    status = Column(String(20), default="active")
+    status = Column(String(20), default="active", server_default=text("'active'"))
     work_mode = Column(String(50))
     job_type = Column(String(50))
     vacancy_count = Column(Integer, default=1)

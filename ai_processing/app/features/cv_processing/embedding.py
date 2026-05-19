@@ -1,5 +1,6 @@
 ﻿from google.genai import types
 
+from app.common.clients.ai_retry import call_ai_with_retry
 from app.common.clients.gemini import gemini_client
 from app.common.config import settings
 from app.features.cv_processing.schemas import CVParsedData
@@ -28,9 +29,12 @@ class CVEmbeddingPipeline:
     async def generate_embedding(text: str) -> list[float] | None:
         if not text:
             return None
-        response = gemini_client.models.embed_content(
-            model=settings.embedding_model,
-            contents=text,
-            config=types.EmbedContentConfig(output_dimensionality=768),
+        response = await call_ai_with_retry(
+            "cv_embedding.embed_content",
+            lambda: gemini_client.models.embed_content(
+                model=settings.embedding_model,
+                contents=text,
+                config=types.EmbedContentConfig(output_dimensionality=768),
+            ),
         )
         return response.embeddings[0].values

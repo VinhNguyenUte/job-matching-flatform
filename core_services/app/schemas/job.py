@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from pydantic import Field, EmailStr
+from pydantic import Field, EmailStr, field_validator
 from uuid import UUID
 from typing import Any, List, Optional
 from decimal import Decimal
@@ -45,6 +45,20 @@ class JobBase(BaseSchema):
     extended_attributes: Optional[Any] = None # JSONB
     source_url: Optional[str] = None
 
+    @field_validator("status", mode="before")
+    @classmethod
+    def default_status(cls, value):
+        return value or "active"
+
+    @field_validator("contact_email", mode="before")
+    @classmethod
+    def normalize_contact_email(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, str) and value.strip().lower() in {"", "null", "none", "n/a"}:
+            return None
+        return value
+
 class JobCreate(JobBase):
     company_id: Optional[UUID] = None
 
@@ -57,6 +71,11 @@ class JobResponse(JobBase):
     # Các quan hệ kết nối (Sử dụng property hoặc joined load từ DB)
     company: Optional[CompanyResponse] = None
     locations: List[JobLocationResponse] = []
+
+
+class JobRecommendationResponse(JobResponse):
+    match_score: float
+
 
 class JobDetailResponse(JobResponse):
     """Schema mở rộng chứa toàn bộ ma trận dữ liệu đã bóc tách từ AI phục vụ màn hình chi tiết job"""

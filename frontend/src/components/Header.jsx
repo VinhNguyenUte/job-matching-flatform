@@ -17,12 +17,10 @@ export default function Header() {
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-        {/* Logo định danh */}
         <Link to="/" className="text-2xl font-black tracking-tight text-blue-600 flex items-center gap-2">
           <span className="bg-blue-600 text-white px-2 py-0.5 rounded-lg text-xl">Job</span>Match
         </Link>
 
-        {/* Thanh điều hướng chính (Chế độ Desktop) */}
         <div className="hidden md:flex items-center gap-8">
           <Link to="/jobs" className="text-gray-600 hover:text-blue-600 font-medium transition flex items-center gap-1.5">
             <Briefcase size={18} />
@@ -32,7 +30,7 @@ export default function Header() {
             <>
               <Link to="/dashboard" className="text-gray-600 hover:text-blue-600 font-medium transition flex items-center gap-1.5">
                 <LayoutDashboard size={18} />
-                Bảng điều khiển
+                Gợi ý công việc
               </Link>
               <Link to="/profile" className="text-gray-600 hover:text-blue-600 font-medium transition flex items-center gap-1.5">
                 <User size={18} />
@@ -42,7 +40,6 @@ export default function Header() {
           )}
         </div>
 
-        {/* Khối chức năng tài khoản (Chế độ Desktop) */}
         <div className="hidden md:flex items-center gap-4">
           {user ? (
             <div className="flex items-center gap-4">
@@ -78,7 +75,6 @@ export default function Header() {
           )}
         </div>
 
-        {/* Nút bật/tắt Menu trên Mobile */}
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           className="md:hidden p-2 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition"
@@ -87,7 +83,6 @@ export default function Header() {
         </button>
       </nav>
 
-      {/* Menu thả xuống (Chế độ Mobile) */}
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-3 shadow-lg absolute w-full left-0 animate-in fade-in slide-in-from-top-2 duration-200">
           <Link 
@@ -107,7 +102,7 @@ export default function Header() {
                 className="flex items-center gap-3 px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg font-medium transition"
               >
                 <LayoutDashboard size={18} />
-                Bảng điều khiển
+                Gợi ý công việc
               </Link>
               <Link 
                 to="/profile" 

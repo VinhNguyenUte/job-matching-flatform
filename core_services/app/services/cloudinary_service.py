@@ -33,21 +33,31 @@ class CloudinaryService:
         object_name: str,
         content_type: str,
         folder: Optional[str] = None,
+        resource_type: str = "image",
+        strip_extension: bool = True,
     ) -> str:
         data_uri = f"data:{content_type};base64,{base64.b64encode(file_data).decode('ascii')}"
-        public_id = object_name.rsplit(".", 1)[0].replace("\\", "/")
+        public_id = object_name.replace("\\", "/")
+        if strip_extension:
+            public_id = public_id.rsplit(".", 1)[0]
 
         result = cloudinary.uploader.upload(
             data_uri,
             folder=folder or self.folder,
             public_id=public_id,
             overwrite=False,
-            resource_type="image",
+            resource_type=resource_type,
         )
         return result["secure_url"]
 
     async def upload_cv(self, file_data: bytes, object_name: str, content_type: str) -> str:
-        return await self.upload_file(file_data=file_data, object_name=object_name, content_type=content_type)
+        return await self.upload_file(
+            file_data=file_data,
+            object_name=object_name,
+            content_type=content_type,
+            resource_type="raw",
+            strip_extension=False,
+        )
 
 
 cloudinary_service = CloudinaryService()

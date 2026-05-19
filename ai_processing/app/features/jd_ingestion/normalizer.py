@@ -1,5 +1,6 @@
 from google.genai import types
 
+from app.common.clients.ai_retry import call_ai_with_retry
 from app.common.clients.gemini import gemini_client
 from app.common.config import settings
 from app.common.schemas.job import JobParsedSchema
@@ -40,13 +41,18 @@ Embedding context text:
 Raw job description:
 {raw_content}
 """
-        response = gemini_client.models.generate_content(
-            model=settings.AI_GENERATION_MODEL,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=JobParsedSchema,
-                temperature=0.1,
+        response = await call_ai_with_retry(
+            "jd_normalizer.generate_content",
+            lambda: gemini_client.models.generate_content(
+                model=settings.AI_GENERATION_MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=JobParsedSchema,
+                    temperature=0.1,
+                ),
             ),
+            rate_limit_key="generate_content",
+            min_interval_seconds=settings.AI_GENERATION_MIN_INTERVAL_SECONDS,
         )
         return JobParsedSchema.model_validate_json(response.text)

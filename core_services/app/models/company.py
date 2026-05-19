@@ -18,7 +18,7 @@ class Company(Base):
     mission = Column(Text)
     size_range = Column(String(50))
     description = Column(Text)
-    is_global = Column(Boolean, default=False)
+    is_global = Column(Boolean, default=False, server_default=text("false"))
     created_at = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
 
     jobs = relationship("Job", back_populates="company")

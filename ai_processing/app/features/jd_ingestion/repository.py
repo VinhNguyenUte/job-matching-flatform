@@ -70,7 +70,7 @@ class JDRepository:
         job_id = await conn.fetchval(
             """
             INSERT INTO jobs (
-                company_id, title, business_unit, department, job_level, work_mode, job_type,
+                company_id, title, business_unit, department, job_level, status, work_mode, job_type,
                 vacancy_count, min_experience, target_majors, education_level_required,
                 academic_support, working_hours, salary_min, salary_max, salary_unit, currency,
                 salary_description, performance_review_frequency, uses_ai_in_hiring,
@@ -80,14 +80,14 @@ class JDRepository:
                 source_url, posted_at
             )
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7,
-                $8, $9, $10::jsonb, $11,
-                $12, $13, $14, $15, $16, $17,
-                $18, $19, $20,
-                $21, $22, $23, $24::vector,
-                $25, $26, $27, $28,
-                $29, $30::jsonb, $31::jsonb, $32::jsonb,
-                $33, $34
+                $1, $2, $3, $4, $5, $6, $7, $8,
+                $9, $10, $11::jsonb, $12,
+                $13, $14, $15, $16, $17, $18,
+                $19, $20, $21,
+                $22, $23, $24, $25::vector,
+                $26, $27, $28, $29,
+                $30, $31::jsonb, $32::jsonb, $33::jsonb,
+                $34, $35
             )
             RETURNING id
             """,
@@ -96,6 +96,7 @@ class JDRepository:
             parsed.business_unit,
             parsed.department,
             parsed.job_level,
+            "active",
             parsed.work_mode,
             parsed.job_type,
             parsed.vacancy_count,
@@ -154,8 +155,8 @@ class JDRepository:
 
         return await conn.fetchval(
             """
-            INSERT INTO companies (name, website, industry)
-            VALUES ($1, $2, $3)
+            INSERT INTO companies (name, website, industry, is_global)
+            VALUES ($1, $2, $3, false)
             RETURNING id
             """,
             parsed.company.name,

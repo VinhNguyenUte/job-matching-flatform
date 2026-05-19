@@ -9,6 +9,11 @@
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d job_matching_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   rabbitmq:
     image: rabbitmq:3.11-management
@@ -34,6 +39,7 @@
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
       RABBITMQ_HOST: rabbitmq
       CV_PROCESSING_QUEUE: cv_processing_queue
+      JD_INGESTION_QUEUE: jd_ingestion_queue
     ports:
       - "8001:8001"
     depends_on:
@@ -58,10 +64,14 @@
       RABBITMQ_HOST: rabbitmq
     ports:
       - "8000:8000"
+    command: sh -c "python init_db.py && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     depends_on:
-      - postgres
-      - rabbitmq
-      - ai_processing
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      ai_processing:
+        condition: service_started
 
   api_gateway:
     build:
@@ -90,6 +100,29 @@
       - api_gateway
     restart: unless-stopped
 
+  crawler_service:
+    build:
+      context: ./crawler_service
+      dockerfile: Dockerfile
+    container_name: job_platform_crawler
+    environment:
+      - HEADLESS=false
+      - FACEBOOK_MAX_POSTS=5
+      - FACEBOOK_SCRAPE_COMMENTS=false
+      - ENABLE_RABBITMQ_PUBLISH=true
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - RABBITMQ_HOST=rabbitmq
+      - JD_INGESTION_QUEUE=jd_ingestion_queue
+    volumes:
+      - ./crawler_service/data:/app/data
+      - ./crawler_service/spiders:/app/spiders
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+    
 volumes:
   postgres_data:
+
+
+
 

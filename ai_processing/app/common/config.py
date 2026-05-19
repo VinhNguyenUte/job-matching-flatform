@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     RABBITMQ_HOST: str = "rabbitmq"
     CV_PROCESSING_QUEUE: str = "cv_processing_queue"
     CV_RECOMMENDATION_LIMIT: int = 5
+    AI_RETRY_ATTEMPTS: int = 4
+    AI_RETRY_BASE_DELAY_SECONDS: float = 2.0
+    AI_RETRY_MAX_DELAY_SECONDS: float = 60.0
+    AI_GENERATION_MIN_INTERVAL_SECONDS: float = 13.0
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
