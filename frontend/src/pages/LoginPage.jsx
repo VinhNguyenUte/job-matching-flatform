@@ -2,7 +2,7 @@ import { useState } from 'react'
 import apiClient from '../lib/api'
 import { useAuthStore } from '../lib/store'
 import { useNavigate } from 'react-router-dom'
-
+import axios from 'axios'
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -17,30 +17,48 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const payload = new FormData()
+      // 1. Dùng URLSearchParams chuẩn cho FastAPI
+      const payload = new URLSearchParams()
       payload.append('username', email)
       payload.append('password', password)
 
-      const response = await apiClient.post('/auth/login', payload)
+      // 2. Dùng CHÍNH XÁC apiClient (không dùng axios trần)
+      const response = await apiClient.post('/auth/login', payload, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      })
 
       const { access_token } = response.data
+      console.log('Received access token:', access_token)
       setToken(access_token)
 
-      // Fetch user profile
-      const userResponse = await apiClient.get('/auth/me')
+      // 3. Lấy profile và truyền thẳng token (đề phòng store chưa cập nhật kịp)
+      const userResponse = await apiClient.get('/auth/me', {
+        headers: {
+          Authorization: `Bearer ${access_token}`
+        }
+      })
       setUser(userResponse.data)
 
       navigate('/dashboard')
     } catch (err) {
-      const detail = err.response?.data?.detail
-      const errorMessage = Array.isArray(detail)
-        ? detail.map((item) => item.msg || JSON.stringify(item)).join(', ')
-        : typeof detail === 'string'
-        ? detail
-        : detail
-        ? JSON.stringify(detail)
-        : 'Login failed. Please try again.'
-      setError(errorMessage)
+      // IN LỖI RA CONSOLE ĐỂ BẠN NHÌN THẤY
+      console.error('LỖI ĐÂY NÈ:', err)
+
+      // THAY ĐỔI QUAN TRỌNG: Nếu lỗi do JavaScript crash, hiển thị err.message luôn
+      if (err.response?.data?.detail) {
+        const detail = err.response.data.detail
+        const errorMessage = Array.isArray(detail)
+          ? detail.map((item) => item.msg || JSON.stringify(item)).join(', ')
+          : typeof detail === 'string'
+          ? detail
+          : JSON.stringify(detail)
+        setError(errorMessage)
+      } else {
+        // Hiện lỗi JavaScript thực tế (Ví dụ: "apiClient is not defined", "navigate is not found"...)
+        setError(err.message || 'Login failed. Please try again.')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -86,6 +104,10 @@ export default function LoginPage() {
 
           <button
             type="submit"
+            onClick={(e) => {
+              e.preventDefault();
+              handleSubmit(e);
+            }}
             disabled={isLoading}
             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
           >
