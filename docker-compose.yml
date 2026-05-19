@@ -19,17 +19,6 @@
       - "5672:5672"
       - "15672:15672"
 
-  minio:
-    image: minio/minio:latest
-    command: server /data
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    ports:
-      - "9000:9000"
-    volumes:
-      - minio_data:/data
-
   ai_processing:
     build:
       context: ./ai_processing
@@ -42,10 +31,14 @@
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      RABBITMQ_HOST: rabbitmq
+      CV_PROCESSING_QUEUE: cv_processing_queue
     ports:
       - "8001:8001"
     depends_on:
       - postgres
+      - rabbitmq
 
   core_services:
     build:
@@ -57,20 +50,46 @@
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-job_matching_db}
       AI_PROCESSING_URL: http://ai_processing:8001
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-      MINIO_ENDPOINT: minio:9000
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      CLOUDINARY_FOLDER: job-matching/cvs
       POSTGRES_HOST: postgres
       RABBITMQ_HOST: rabbitmq
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
     ports:
       - "8000:8000"
     depends_on:
       - postgres
       - rabbitmq
-      - minio
       - ai_processing
+
+  api_gateway:
+    build:
+      context: ./api_gateway
+      dockerfile: Dockerfile
+    container_name: job_platform_api_gateway
+    ports:
+      - "80:80"
+    depends_on:
+      - core_services
+      - ai_processing
+    networks:
+      - default
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: job_platform_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_URL: http://api_gateway/api/v1
+    depends_on:
+      - api_gateway
+    restart: unless-stopped
 
 volumes:
   postgres_data:
-  minio_data:
 

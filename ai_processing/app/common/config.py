@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     GOOGLE_CLOUD_LOCATION: str = "us-central1"
     VERTEX_LOCATION: str | None = None
     GOOGLE_APPLICATION_CREDENTIALS: str | None = None
+    RABBITMQ_URL: str | None = None
+    RABBITMQ_HOST: str = "rabbitmq"
+    CV_PROCESSING_QUEUE: str = "cv_processing_queue"
+    CV_RECOMMENDATION_LIMIT: int = 5
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

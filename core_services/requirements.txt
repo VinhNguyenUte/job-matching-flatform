@@ -10,8 +10,8 @@ python-multipart==0.0.9
 passlib[bcrypt]==1.7.4
 python-jose[cryptography]==3.3.0
 pika==1.3.2
-minio==7.2.5
 httpx==0.28.1
 pydantic[email]
 bcrypt==4.0.1
+cloudinary==1.41.0
 

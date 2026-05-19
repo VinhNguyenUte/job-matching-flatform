@@ -1,0 +1,19 @@
+# .dockerignore for API Gateway
+# Exclude unnecessary files from Docker image build
+
+.git
+.gitignore
+.env
+.env.example
+.vscode
+.idea
+*.md
+*.txt
+*.log
+__pycache__
+*.pyc
+node_modules
+.DS_Store
+*.swp
+*.swo
+*~

@@ -77,3 +77,16 @@ Thumbs.db
 # Jupyter
 # =========================
 .ipynb_checkpoints/
+
+# =========================
+# Frontend / Node.js / npm
+# =========================
+node_modules/
+/dist/
+/build/
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+.npm
+.yarn/
+*.log
