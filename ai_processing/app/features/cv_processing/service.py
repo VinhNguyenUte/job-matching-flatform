@@ -5,10 +5,20 @@ from app.common.database.sql_db import connect_sql_db
 from app.features.cv_processing.embedding import CVEmbeddingPipeline
 from app.features.cv_processing.parser import CVParserService
 from app.features.cv_processing.repository import CVRepository
-from app.features.cv_processing.schemas import CVExtractRequest, CVExtractResponse
+from app.features.cv_processing.schemas import CVExtractRequest, CVExtractResponse, CVImagePayload, CVParsedData
 
 
 class CVProcessingService:
+    @staticmethod
+    async def parse_cv_images(cv_urls: list[str]) -> CVParsedData:
+        images = [CVImagePayload(url=url) for url in cv_urls]
+        return await CVParserService.parse_images(images)
+
+    @staticmethod
+    async def generate_embedding(parsed: CVParsedData) -> list[float] | None:
+        embedding_text = CVEmbeddingPipeline.build_embedding_text(parsed)
+        return await CVEmbeddingPipeline.generate_embedding(embedding_text)
+
     @staticmethod
     async def extract_cv(payload: CVExtractRequest) -> CVExtractResponse:
         parsed = await CVParserService.parse_images(payload.images)

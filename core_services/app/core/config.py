@@ -3,20 +3,19 @@
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Enterprise Job Matching Core API"
-    DATABASE_URL: str
-    AI_PROCESSING_URL: str = "http://ai_processing:8001"
+    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5433/job_matching_db"
+    AI_PROCESSING_URL: str = "http://localhost:8001"
 
-    # MinIO Object Storage
-    MINIO_ENDPOINT: str
-    MINIO_ACCESS_KEY: str
-    MINIO_SECRET_KEY: str
-    MINIO_BUCKET_CV: str = "user-cvs"
+    CLOUDINARY_CLOUD_NAME: str = ""
+    CLOUDINARY_API_KEY: str = ""
+    CLOUDINARY_API_SECRET: str = ""
+    CLOUDINARY_FOLDER: str = "job-matching/cvs"
 
-    # RabbitMQ Broker
-    RABBITMQ_URL: str
+    RABBITMQ_URL: str = "amqp://guest:guest@localhost:5672/"
+    RABBITMQ_HOST: str = "localhost"
     CV_QUEUE_NAME: str = "cv_processing_queue"
+    CV_PROCESSING_QUEUE: str = "cv_processing_queue"
 
-    # JWT Security
     SECRET_KEY: str = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60

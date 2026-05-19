@@ -42,10 +42,14 @@
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      RABBITMQ_HOST: rabbitmq
+      CV_PROCESSING_QUEUE: cv_processing_queue
     ports:
       - "8001:8001"
     depends_on:
       - postgres
+      - rabbitmq
 
   core_services:
     build:
