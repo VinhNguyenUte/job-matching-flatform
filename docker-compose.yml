@@ -1,0 +1,128 @@
+﻿services:
+  postgres:
+    image: pgvector/pgvector:pg15
+    environment:
+      POSTGRES_DB: job_matching_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d job_matching_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  ai_processing:
+    build:
+      context: ./ai_processing
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: job_matching_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      RABBITMQ_HOST: rabbitmq
+      CV_PROCESSING_QUEUE: cv_processing_queue
+      JD_INGESTION_QUEUE: jd_ingestion_queue
+    ports:
+      - "8001:8001"
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  core_services:
+    build:
+      context: ./core_services
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-job_matching_db}
+      AI_PROCESSING_URL: http://ai_processing:8001
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      CLOUDINARY_FOLDER: job-matching/cvs
+      POSTGRES_HOST: postgres
+      RABBITMQ_HOST: rabbitmq
+    ports:
+      - "8000:8000"
+    command: sh -c "python init_db.py && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      ai_processing:
+        condition: service_started
+
+  api_gateway:
+    build:
+      context: ./api_gateway
+      dockerfile: Dockerfile
+    container_name: job_platform_api_gateway
+    ports:
+      - "80:80"
+    depends_on:
+      - core_services
+      - ai_processing
+    networks:
+      - default
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: job_platform_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_URL: http://api_gateway/api/v1
+    depends_on:
+      - api_gateway
+    restart: unless-stopped
+
+  crawler_service:
+    build:
+      context: ./crawler_service
+      dockerfile: Dockerfile
+    container_name: job_platform_crawler
+    environment:
+      - HEADLESS=false
+      - FACEBOOK_MAX_POSTS=5
+      - FACEBOOK_SCRAPE_COMMENTS=false
+      - ENABLE_RABBITMQ_PUBLISH=true
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - RABBITMQ_HOST=rabbitmq
+      - JD_INGESTION_QUEUE=jd_ingestion_queue
+    volumes:
+      - ./crawler_service/data:/app/data
+      - ./crawler_service/spiders:/app/spiders
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+    
+volumes:
+  postgres_data:
+
+
+
+

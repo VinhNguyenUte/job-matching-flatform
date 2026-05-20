@@ -1,0 +1,7 @@
+playwright==1.43.0
+playwright-stealth
+schedule
+pika
+google-generativeai
+rich
+python-dotenv
